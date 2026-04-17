@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.template
+!.env.test
+
+# Build and IDE
+dist/
+.cache/
+.medusa/
+.vscode/
+.idea/
+
+# Testing
+playwright-report/
+test-results/
+**/playwright-report/
+**/test-results/
+
+# Storefronts/Backends that shouldn't be in this repo (likely generated or temporary)
+backend-storefront-pt4x/
+backend-storefront/
+silvia-rassi-collection-storefront/
+
+# OS files
+.DS_Store
+Thumbs.db
