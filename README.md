@@ -2,7 +2,7 @@
 
 This is a single-page e-commerce website for the "Silvia Tcherassi" brand, showcasing various collections of clothing and accessories.
 
-[View the live site](https://anselmem.github.io/Silvia-rassi-Collection/)
+[View the live site]([https://anselmem.github.io/Silvia-rassi-Collection/])
 
 ## Technologies Used
 
