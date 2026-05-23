@@ -3,6 +3,7 @@ import { useProduct } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/utils';
 import { UI_TEXT } from '@/lib/constants';
+import SafeImage from '@/components/ui/SafeImage';
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -50,7 +51,7 @@ export default function ProductPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Product Image Gallery */}
         <div className="flex flex-col gap-4">
-          <img
+          <SafeImage
             id="product-main-image"
             alt={`Main view of ${product.name}`}
             className="w-full h-auto bg-gray-100 p-4 rounded-lg"
@@ -60,7 +61,7 @@ export default function ProductPage() {
           />
           <div id="product-thumbnails-container" className="grid grid-cols-4 gap-4">
             {product.thumbnails.map((thumb, index) => (
-              <img
+              <SafeImage
                 key={index}
                 src={thumb}
                 alt={`Thumbnail ${index + 1} for ${product.name}`}

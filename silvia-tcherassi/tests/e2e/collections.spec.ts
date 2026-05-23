@@ -12,18 +12,21 @@ test.describe('Collections Page', () => {
     await expect(page.locator('h1, h2').first()).toContainText('Collections');
     
     // Check products are displayed
-    const productCards = page.locator('[class*="product-card"], [class*="ProductCard"]');
+    const productCards = page.locator('.product-item-container');
     await expect(productCards.first()).toBeVisible();
   });
 
   test('should filter products by category', async ({ page }) => {
-    await page.goto('/collections/dresses');
+    await page.goto('/dresses');
     
     // Check category heading
     await expect(page.locator('h1, h2').first()).toContainText(/dress/i);
     
+    // Wait for products to load
+    await page.waitForSelector('.product-item-container');
+    
     // Check products are displayed
-    const productCards = page.locator('[class*="product-card"], [class*="ProductCard"]');
+    const productCards = page.locator('.product-item-container');
     const count = await productCards.count();
     expect(count).toBeGreaterThan(0);
   });

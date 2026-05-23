@@ -14,7 +14,7 @@ export default function AboutPage() {
         <img
           alt="A person sewing in a workshop"
           className="w-full h-auto object-cover object-center rounded-lg"
-          src="/images/ladyInBlack.png"
+          src="/images/lady-in-black.png"
           loading="lazy"
         />
         <div>

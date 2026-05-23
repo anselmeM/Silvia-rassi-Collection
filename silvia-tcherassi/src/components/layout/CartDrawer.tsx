@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCartStore } from '@/store/cartStore';
 import { formatPrice } from '@/lib/utils';
 import { UI_TEXT } from '@/lib/constants';
+import SafeImage from '@/components/ui/SafeImage';
 
 export default function CartDrawer() {
   const { items, subtotal, isOpen, closeCart, removeItem, updateQuantity } = useCartStore();
@@ -67,9 +68,9 @@ export default function CartDrawer() {
           ) : (
             items.map((item) => {
               return (
-                <div key={item.id} className="flex items-center justify-between mb-4">
+                <div key={item.id} className="cart-item flex items-center justify-between mb-4">
                   <div className="flex items-center">
-                    <img
+                    <SafeImage
                       src={item.thumbnail}
                       alt={item.title}
                       className="w-16 h-16 object-cover rounded-md mr-4"
@@ -83,6 +84,7 @@ export default function CartDrawer() {
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           className="text-xs px-2 py-1 border rounded hover:bg-gray-100"
                           disabled={item.quantity <= 1}
+                          aria-label="Decrease quantity"
                         >
                           -
                         </button>
@@ -90,6 +92,7 @@ export default function CartDrawer() {
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           className="text-xs px-2 py-1 border rounded hover:bg-gray-100"
+                          aria-label="Increase quantity"
                         >
                           +
                         </button>
@@ -117,9 +120,13 @@ export default function CartDrawer() {
             <span id="cart-subtotal">{formatPrice(subtotal)}</span>
           </div>
           {items.length > 0 && (
-            <button className="w-full bg-black text-white py-3 text-sm font-medium tracking-wider hover:bg-gray-800 rounded-md">
+            <Link 
+              to="/checkout" 
+              onClick={closeCart}
+              className="block w-full bg-black text-white py-3 text-sm font-medium tracking-wider hover:bg-gray-800 rounded-md text-center"
+            >
               {UI_TEXT.PROCEED_TO_CHECKOUT}
-            </button>
+            </Link>
           )}
           <Link
             to="/collections"

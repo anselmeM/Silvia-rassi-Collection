@@ -1,0 +1,9 @@
+{
+  "id": "returns-refunds",
+  "name": "Phase H: Returns & Refunds",
+  "description": "Implementation of customer-facing return requests and backend refund logic processing.",
+  "status": "in-progress",
+  "priority": "medium",
+  "owner": "Gemini CLI",
+  "tags": ["returns", "refunds", "orders", "frontend", "backend"]
+}

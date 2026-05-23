@@ -1,0 +1,9 @@
+{
+  "id": "authentication-flow",
+  "name": "Phase D: Authentication Flow",
+  "description": "Implementation of Medusa native authentication, custom login/registration, password reset, and protected routes.",
+  "status": "in-progress",
+  "priority": "high",
+  "owner": "Gemini CLI",
+  "tags": ["auth", "frontend", "backend", "security"]
+}

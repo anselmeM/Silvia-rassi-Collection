@@ -12,6 +12,25 @@ npm run dev
 
 The app will be available at **http://localhost:3003**
 
+## Backend Integration
+
+This application is integrated with a **Medusa 2.0** headless commerce backend.
+
+### Prerequisites
+
+1.  A running Medusa 2.0 backend.
+2.  Properly configured environment variables (see `.env.template`).
+
+### Environment Variables
+
+Create a `.env` file in the root of the project:
+
+```env
+VITE_MEDUSA_BACKEND_URL=http://localhost:9000
+VITE_MEDUSA_PUBLISHABLE_KEY=your_publishable_key
+VITE_STRIPE_PUBLIC_KEY=pk_test_...
+```
+
 ## Available Scripts
 
 | Command | Description |

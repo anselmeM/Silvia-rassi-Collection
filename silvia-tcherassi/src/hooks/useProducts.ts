@@ -1,88 +1,100 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import Medusa from '@medusajs/medusa-js';
+import { medusa, medusaFetch } from '@/lib/medusa';
 import type { Product, Category } from '@/types';
-
-// Initialize Medusa client
-const medusa = new Medusa({ 
-  baseUrl: import.meta.env.VITE_MEDUSA_BACKEND_URL || 'http://localhost:9000', 
-  maxRetries: 3 
-});
 
 // Type for filters
 interface ProductFilters {
-  category?: Category;
-  categories?: Category[];
-  search?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  inStock?: boolean;
-  sortBy?: 'name' | 'price' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
+  category_id?: string[];
+  handle?: string[];
+  q?: string;
+  limit?: number;
+  offset?: number;
+  order?: string;
 }
+
+/**
+ * Helper to ensure image URLs are correctly formatted
+ */
+const formatImageUrl = (url: string): string => {
+  if (!url) return '/images/placeholder.svg';
+  
+  // Strip hardcoded localhost:3006 if present to make it relative
+  let cleanUrl = url.replace(/^http:\/\/localhost:3006/, '');
+  
+  // If it's still an absolute URL (e.g., S3), return it
+  if (cleanUrl.startsWith('http')) return cleanUrl;
+  
+  // Ensure it starts with /
+  return cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
+};
 
 /**
  * Helper to map Medusa Product to our Frontend Product type
  */
 const mapMedusaProduct = (medusaProduct: any): Product => {
+  if (!medusaProduct) {
+    console.warn('mapMedusaProduct received null/undefined');
+    return {} as Product;
+  }
+
   const variant = medusaProduct.variants?.[0];
-  const price = variant?.prices?.find((p: any) => p.currency_code === 'usd')?.amount || 0;
+  const priceObj = variant?.prices?.find((p: any) => p.currency_code === 'usd');
+  const price = priceObj ? priceObj.amount : 0;
   
+  // Medusa 2.0 categories are an array
+  const categoryName = medusaProduct.categories?.[0]?.name || 'dress';
+  
+  const images = medusaProduct.images?.map((img: any) => formatImageUrl(img.url)) || [];
+  if (images.length === 0 && medusaProduct.thumbnail) {
+    images.push(formatImageUrl(medusaProduct.thumbnail));
+  }
+  
+  // Fallback if still no images
+  if (images.length === 0) {
+    images.push('/images/placeholder.png');
+  }
+
   return {
     id: medusaProduct.id,
-    variantId: variant?.id, // Added variantId
-    name: medusaProduct.title,
+    variantId: variant?.id,
+    name: medusaProduct.title || 'Untitled Product',
     price: price, // Medusa 2.0 uses cents
-    category: (medusaProduct.categories?.[0]?.name?.toLowerCase() || 'dress') as Category,
-    images: medusaProduct.images?.map((img: any) => img.url) || [],
-    thumbnails: medusaProduct.images?.map((img: any) => img.url) || [],
+    category: categoryName.toLowerCase() as Category,
+    images: images,
+    thumbnails: images,
     description: medusaProduct.description || '',
-    inStock: variant?.inventory_quantity > 0 || true, // Default to true if not managed
-    createdAt: medusaProduct.created_at,
+    inStock: (variant?.inventory_quantity !== undefined ? variant.inventory_quantity > 0 : true),
+    createdAt: medusaProduct.created_at || new Date().toISOString(),
   };
 };
 
 // Fetch products from Medusa
-const fetchProducts = async (filters?: ProductFilters): Promise<Product[]> => {
-  const params: any = {
-    limit: 100,
+const fetchProducts = async (filters?: ProductFilters) => {
+  const queryParams = new URLSearchParams();
+  queryParams.append('limit', (filters?.limit || 100).toString());
+  queryParams.append('offset', (filters?.offset || 0).toString());
+  
+  if (filters?.q) queryParams.append('q', filters.q);
+  if (filters?.order) queryParams.append('order', filters.order);
+
+  console.log('Fetching products with params:', queryParams.toString());
+  
+  const data = await medusaFetch(`/store/products?${queryParams.toString()}`);
+  console.log('Medusa products response:', data);
+  
+  return {
+    products: data.products.map(mapMedusaProduct),
+    count: data.count,
+    limit: data.limit,
+    offset: data.offset,
   };
-
-  if (filters?.category) {
-    // In Medusa 2.0 we'd use category_id, but for now we filter by handle or name if needed
-  }
-
-  const { products } = await medusa.products.list(params);
-  let result = products.map(mapMedusaProduct);
-
-  // Client-side filtering for things not easily supported by simple list params
-  if (filters?.category) {
-    result = result.filter(p => p.category === filters.category);
-  }
-
-  if (filters?.search) {
-    const searchLower = filters.search.toLowerCase();
-    result = result.filter(p => 
-      p.name.toLowerCase().includes(searchLower) ||
-      p.description.toLowerCase().includes(searchLower)
-    );
-  }
-
-  return result;
 };
 
 // Fetch all products
-export function useProducts() {
+export function useProducts(filters?: ProductFilters) {
   return useQuery({
-    queryKey: ['products'],
-    queryFn: () => fetchProducts(),
-  });
-}
-
-// Fetch products with filters
-export function useFilteredProducts(filters?: ProductFilters) {
-  return useQuery({
-    queryKey: ['products', 'filtered', filters],
+    queryKey: ['products', filters],
     queryFn: () => fetchProducts(filters),
   });
 }
@@ -100,25 +112,30 @@ export function useProduct(productId: string | undefined) {
   });
 }
 
-// Hook to get products by category (Still using local data if needed, but updated to use the query results)
-export function useProductsByCategory(category: Category | Category[]) {
-  const { data: products = [] } = useProducts();
-  const categories = Array.isArray(category) ? category : [category];
+// Hook to get products by category
+export function useProductsByCategory(categoryName: string) {
+  // First we need to find the category ID by name/handle
+  // For simplicity in this prototype, we'll fetch all and filter or use the handle if supported
+  const { data } = useProducts({ limit: 100 });
   
   return useMemo(() => {
-    return products.filter((p) => categories.includes(p.category as Category));
-  }, [products, categories]);
+    if (!data?.products) return [];
+    return data.products.filter(p => p.category.toLowerCase() === categoryName.toLowerCase());
+  }, [data?.products, categoryName]);
 }
 
 // Hook to get product count by category
 export function useProductCountByCategory() {
-  const { data: products = [] } = useProducts();
+  const { data } = useProducts({ limit: 100 });
   
   return useMemo(() => {
     const counts: Record<string, number> = {};
-    products.forEach((p) => {
+    if (!data?.products) return counts;
+    
+    data.products.forEach((p) => {
       counts[p.category] = (counts[p.category] || 0) + 1;
     });
     return counts;
-  }, [products]);
+  }, [data?.products]);
 }
+

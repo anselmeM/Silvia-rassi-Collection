@@ -94,6 +94,25 @@ export const ProductFiltersSchema = z.object({
 });
 
 // ===================================================================
+// Auth Validation Schemas
+// ===================================================================
+
+export const LoginSchema = z.object({
+  email: z.string().email({ message: 'Invalid email address' }),
+  password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
+});
+
+export const RegisterSchema = z.object({
+  first_name: z.string().min(1, { message: 'First name is required' }),
+  last_name: z.string().min(1, { message: 'Last name is required' }),
+  email: z.string().email({ message: 'Invalid email address' }),
+  password: z.string()
+    .min(8, { message: 'Password must be at least 8 characters' })
+    .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
+    .regex(/[0-9]/, { message: 'Password must contain at least one number' }),
+});
+
+// ===================================================================
 // Type Exports
 // ===================================================================
 
@@ -105,3 +124,5 @@ export type AddToCartInput = z.infer<typeof AddToCartSchema>;
 export type UpdateCartQuantityInput = z.infer<typeof UpdateCartQuantitySchema>;
 export type CartItemInput = z.infer<typeof CartItemSchema>;
 export type ProductFilters = z.infer<typeof ProductFiltersSchema>;
+export type LoginInput = z.infer<typeof LoginSchema>;
+export type RegisterInput = z.infer<typeof RegisterSchema>;

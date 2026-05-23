@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Product } from '@/types';
 import { formatPrice } from '@/lib/utils';
+import SafeImage from '@/components/ui/SafeImage';
 
 interface ProductCardProps {
   product: Product;
@@ -18,7 +19,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
     <div className="product-item-container text-center group relative">
       <div className="relative">
         <Link to={`/product/${product.id}`}>
-          <img
+          <SafeImage
             alt={product.name}
             className="product-image w-full h-full object-cover object-center aspect-square bg-gray-100 p-4 rounded-lg mb-4 transition-opacity cursor-pointer"
             src={product.images[0]}
@@ -37,7 +38,9 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
           </div>
         </Link>
       </div>
-      <p className="font-medium">{product.name}</p>
+      <Link to={`/product/${product.id}`} className="block mt-4 hover:underline">
+        <p className="font-medium">{product.name}</p>
+      </Link>
       <p className="text-sm text-gray-600">{formatPrice(product.price)}</p>
     </div>
   );

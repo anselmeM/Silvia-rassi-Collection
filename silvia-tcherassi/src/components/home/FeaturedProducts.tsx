@@ -3,7 +3,7 @@ import ProductCard from '@/components/product/ProductCard';
 import { useUIStore } from '@/store/uiStore';
 
 export default function FeaturedProducts() {
-  const { data: products, isLoading } = useProducts();
+  const { data, isLoading } = useProducts({ limit: 4 });
   const { openQuickView } = useUIStore();
 
   if (isLoading) {
@@ -22,8 +22,7 @@ export default function FeaturedProducts() {
     );
   }
 
-  // Show first 4 products as featured
-  const featuredProducts = products?.slice(0, 4) || [];
+  const featuredProducts = data?.products || [];
 
   return (
     <section className="px-6 md:px-12 py-16">

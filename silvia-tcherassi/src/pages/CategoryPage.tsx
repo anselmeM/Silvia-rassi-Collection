@@ -2,6 +2,7 @@ import type { Category } from '@/types';
 import { useProducts } from '@/hooks/useProducts';
 import ProductGrid from '@/components/product/ProductGrid';
 import { CATEGORY_DESCRIPTIONS } from '@/lib/constants';
+import { useUIStore } from '@/store/uiStore';
 
 interface CategoryPageProps {
   category: Category;
@@ -9,9 +10,10 @@ interface CategoryPageProps {
 }
 
 export default function CategoryPage({ category, includeBlouses = false }: CategoryPageProps) {
-  const { data: allProducts, isLoading } = useProducts();
+  const { data, isLoading } = useProducts({ limit: 100 });
+  const { openQuickView } = useUIStore();
   
-  const filteredProducts = allProducts?.filter((p) => {
+  const filteredProducts = data?.products?.filter((p) => {
     if (includeBlouses && category === 'dress') {
       return p.category === 'dress' || p.category === 'blouse';
     }
@@ -31,6 +33,7 @@ export default function CategoryPage({ category, includeBlouses = false }: Categ
         <ProductGrid
           products={filteredProducts}
           isLoading={isLoading}
+          onQuickView={openQuickView}
           emptyMessage={`No ${title.toLowerCase()} found.`}
         />
       </section>

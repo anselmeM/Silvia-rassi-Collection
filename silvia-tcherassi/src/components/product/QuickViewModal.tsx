@@ -4,6 +4,7 @@ import { useProduct } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/utils';
 import { UI_TEXT } from '@/lib/constants';
+import SafeImage from '@/components/ui/SafeImage';
 
 interface QuickViewModalProps {
   productId: string | null;
@@ -12,7 +13,7 @@ interface QuickViewModalProps {
 }
 
 export default function QuickViewModal({ productId, isOpen, onClose }: QuickViewModalProps) {
-  const { data: product } = useProduct(productId || undefined);
+  const { data: product, isLoading } = useProduct(productId || undefined);
   const { addToCart } = useCart();
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -20,6 +21,9 @@ export default function QuickViewModal({ productId, isOpen, onClose }: QuickView
   // Focus management
   useEffect(() => {
     if (!isOpen) return;
+    
+    // If product is still loading, we can't focus the modal content yet
+    if (isLoading || !product) return;
 
     const previousActiveElement = document.activeElement as HTMLElement;
     
@@ -60,7 +64,7 @@ export default function QuickViewModal({ productId, isOpen, onClose }: QuickView
       // Restore focus to previous element
       previousActiveElement?.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isLoading, product]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -82,7 +86,17 @@ export default function QuickViewModal({ productId, isOpen, onClose }: QuickView
     }
   };
 
-  if (!isOpen || !product) return null;
+  if (!isOpen) return null;
+
+  if (isLoading || !product) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-8 flex items-center justify-center min-h-[400px]">
+          <div className="animate-pulse text-stone-400">Loading product details...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -107,7 +121,7 @@ export default function QuickViewModal({ productId, isOpen, onClose }: QuickView
         </button>
 
         <div className="quick-view-image-container">
-          <img
+          <SafeImage
             id="quick-view-image"
             src={product.images[0]}
             alt={`Quick view of ${product.name}`}

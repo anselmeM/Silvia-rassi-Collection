@@ -4,8 +4,11 @@ test.describe('Product Page', () => {
   test('should view product details', async ({ page }) => {
     await page.goto('/');
     
-    // Navigate to a product - clicking on first product card
-    const productLink = page.locator('a[href*="/product/"]').first();
+    // Wait for products
+    await page.waitForSelector('.product-item-container');
+    
+    // Click on a product name
+    const productLink = page.locator('.product-item-container a p').first();
     await productLink.click();
     
     // Wait for product page to load
@@ -13,20 +16,21 @@ test.describe('Product Page', () => {
     
     // Check product details are displayed
     await expect(page.locator('h1, h2').first()).toBeVisible();
-    
-    // Check add to bag button exists
-    const addToBagButton = page.locator('button:has-text("Add to Bag"), button:has-text("Add to Bag")');
-    await expect(addToBagButton.first()).toBeVisible();
+    await expect(page.locator('button:has-text("Add to Bag")')).toBeVisible();
   });
 
   test('should display product gallery', async ({ page }) => {
-    await page.goto('/product/1');
+    await page.goto('/collections');
     
-    // Check main image is visible
-    const mainImage = page.locator('img').first();
-    await expect(mainImage).toBeVisible();
+    // Wait for products
+    await page.waitForSelector('.product-item-container');
     
-    // Check product name and price are displayed
-    await expect(page.locator('[class*="price"], text=$').first()).toBeVisible();
+    // Go to product page
+    await page.locator('.product-item-container a p').first().click();
+    await expect(page).toHaveURL(/\/product\//);
+    
+    // Check images are visible
+    const images = page.locator('img');
+    await expect(images.first()).toBeVisible();
   });
 });

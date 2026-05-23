@@ -7,6 +7,9 @@ import MobileMenu from '@/components/layout/MobileMenu';
 import Toast from '@/components/layout/Toast';
 import { ROUTES } from '@/lib/constants';
 import { useCartStore } from '@/store/cartStore';
+import { useUIStore } from '@/store/uiStore';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import QuickViewModal from '@/components/product/QuickViewModal';
 
 // Lazy load pages for code splitting
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -14,6 +17,16 @@ const CollectionsPage = lazy(() => import('@/pages/CollectionsPage'));
 const CategoryPage = lazy(() => import('@/pages/CategoryPage'));
 const ProductPage = lazy(() => import('@/pages/ProductPage'));
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
+const CheckoutPage = lazy(() => import('@/pages/CheckoutPage'));
+const OrderConfirmationPage = lazy(() => import('@/pages/OrderConfirmationPage'));
+const MyOrdersPage = lazy(() => import('@/pages/MyOrdersPage'));
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+const AddressesPage = lazy(() => import('@/pages/AddressesPage'));
+const ReturnRequestPage = lazy(() => import('@/pages/ReturnRequestPage'));
 
 // Loading skeleton component
 function PageSkeleton() {
@@ -27,6 +40,7 @@ function PageSkeleton() {
 // Layout component to wrap pages
 function RootLayout() {
   const { initializeCart } = useCartStore();
+  const { isQuickViewOpen, quickViewProductId, closeQuickView } = useUIStore();
 
   // Initialize cart on mount
   useEffect(() => {
@@ -56,6 +70,11 @@ function RootLayout() {
       <CartDrawer />
       <MobileMenu />
       <Toast />
+      <QuickViewModal
+        productId={quickViewProductId}
+        isOpen={isQuickViewOpen}
+        onClose={closeQuickView}
+      />
     </div>
   );
 }
@@ -134,6 +153,94 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageSkeleton />}>
             <AboutPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'login',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <LoginPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'register',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <RegisterPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forgot-password',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ForgotPasswordPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'reset-password',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ResetPasswordPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'checkout',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <CheckoutPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'order-confirmation',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <OrderConfirmationPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'my-orders',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ProtectedRoute>
+              <MyOrdersPage />
+            </ProtectedRoute>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'profile',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'profile/addresses',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ProtectedRoute>
+              <AddressesPage />
+            </ProtectedRoute>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'return/:orderId',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ProtectedRoute>
+              <ReturnRequestPage />
+            </ProtectedRoute>
           </Suspense>
         ),
       },

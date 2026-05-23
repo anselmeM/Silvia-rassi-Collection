@@ -1,11 +1,20 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useCart } from '@/hooks/useCart';
 import { useUIStore } from '@/store/uiStore';
+import { useAuthStore } from '@/store/authStore';
 import { ROUTES, UI_TEXT } from '@/lib/constants';
+import { User, LogOut, ShoppingBag } from 'lucide-react';
 
 export default function Header() {
   const { itemCount, openCart } = useCart();
   const { toggleMobileMenu } = useUIStore();
+  const { customer, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   return (
     <header
@@ -55,10 +64,24 @@ export default function Header() {
 
       {/* Right Section: Login, Cart, and Mobile Menu Toggle */}
       <div className="flex items-center space-x-4">
-        <div className="hidden md:flex items-center space-x-4 text-sm">
-          <a href="#" className="hover:underline">
-            Log in
-          </a>
+        <div className="hidden md:flex items-center space-x-6 text-[10px] uppercase tracking-widest font-bold">
+          {customer ? (
+            <>
+              <Link to="/my-orders" className="hover:text-stone-500 flex items-center gap-1">
+                <ShoppingBag className="w-3 h-3" /> Orders
+              </Link>
+              <Link to="/profile" className="hover:text-stone-500 flex items-center gap-1">
+                <User className="w-3 h-3" /> Profile
+              </Link>
+              <button onClick={handleLogout} className="hover:text-stone-500 flex items-center gap-1">
+                <LogOut className="w-3 h-3" /> Logout
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="hover:underline">
+              Log in
+            </Link>
+          )}
         </div>
         <button
           id="cart-button"

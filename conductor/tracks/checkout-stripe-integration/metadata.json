@@ -1,0 +1,9 @@
+{
+  "id": "checkout-stripe-integration",
+  "name": "Phases E & F: Checkout & Stripe Integration",
+  "description": "Implementation of the multi-step checkout flow and full Stripe payment integration.",
+  "status": "in-progress",
+  "priority": "high",
+  "owner": "Gemini CLI",
+  "tags": ["checkout", "stripe", "payments", "frontend", "backend"]
+}

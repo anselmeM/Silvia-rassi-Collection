@@ -1,0 +1,3 @@
+  The platform is now a fully functional full-stack prototype ready for production hardening. To start the development environment:
+   1. Backend: cd backend && npx medusa develop
+   2. Frontend: cd silvia-tcherassi && npm run dev

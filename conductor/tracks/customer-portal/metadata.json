@@ -1,0 +1,9 @@
+{
+  "id": "customer-portal",
+  "name": "Phase G: Customer Portal",
+  "description": "Implementation of customer account features: order history, profile management, and address book.",
+  "status": "in-progress",
+  "priority": "medium",
+  "owner": "Gemini CLI",
+  "tags": ["customer", "orders", "profile", "frontend"]
+}

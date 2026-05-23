@@ -1,22 +1,38 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import Medusa from '@medusajs/medusa-js';
-import type { CartItem, CartState } from '@/types';
+import { medusa } from '@/lib/medusa';
 import { STORAGE_KEYS } from '@/lib/constants';
 
-const medusa = new Medusa({ 
-  baseUrl: import.meta.env.VITE_MEDUSA_BACKEND_URL || 'http://localhost:9000', 
-  maxRetries: 3 
-});
+const formatImageUrl = (url: string): string => {
+  if (!url) return '/images/placeholder.svg';
+  
+  // Strip hardcoded localhost:3006 if present to make it relative
+  let cleanUrl = url.replace(/^http:\/\/localhost:3006/, '');
+  
+  // If it's still an absolute URL (e.g., S3), return it
+  if (cleanUrl.startsWith('http')) return cleanUrl;
+  
+  // Ensure it starts with /
+  return cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
+};
 
-interface MedusaCartState extends Omit<CartState, 'items'> {
+interface MedusaCartState {
   cartId: string | null;
   items: any[]; // Medusa Line Items
   regionId: string | null;
+  subtotal: number;
+  itemCount: number;
+  isOpen: boolean;
+  
+  // Actions
   initializeCart: () => Promise<void>;
   addItem: (variantId: string, quantity?: number) => Promise<void>;
   removeItem: (lineItemId: string) => Promise<void>;
   updateQuantity: (lineItemId: string, quantity: number) => Promise<void>;
+  clearCart: () => void;
+  openCart: () => void;
+  closeCart: () => void;
+  hydrate: () => void;
 }
 
 export const useCartStore = create<MedusaCartState>()(
@@ -43,15 +59,18 @@ export const useCartStore = create<MedusaCartState>()(
             set({ cartId, regionId });
           } else {
             const { cart } = await medusa.carts.retrieve(cartId);
+            const items = cart.items.map((item: any) => ({
+              ...item,
+              thumbnail: formatImageUrl(item.thumbnail),
+            }));
             set({ 
-              items: cart.items, 
+              items, 
               subtotal: cart.subtotal || 0,
-              itemCount: cart.items.reduce((acc, next) => acc + next.quantity, 0)
+              itemCount: items.reduce((acc, next) => acc + next.quantity, 0)
             });
           }
         } catch (error) {
           console.error('Failed to initialize cart:', error);
-          // If cart not found on server, clear local id
           set({ cartId: null });
         }
       },
@@ -66,16 +85,25 @@ export const useCartStore = create<MedusaCartState>()(
 
         if (!cartId) return;
 
+        // Optimistic update could be added here, but Medusa cart operations are relatively fast
+        // and involve server-side calculations (taxes, discounts) that are hard to replicate client-side.
+        // Instead, we'll set a loading state if we had one.
+
         try {
           const { cart } = await medusa.carts.lineItems.create(cartId, {
             variant_id: variantId,
             quantity,
           });
           
+          const items = cart.items.map((item: any) => ({
+            ...item,
+            thumbnail: formatImageUrl(item.thumbnail),
+          }));
+
           set({ 
-            items: cart.items, 
+            items, 
             subtotal: cart.subtotal || 0,
-            itemCount: cart.items.reduce((acc, next) => acc + next.quantity, 0),
+            itemCount: items.reduce((acc, next) => acc + next.quantity, 0),
             isOpen: true
           });
         } catch (error) {
@@ -84,36 +112,68 @@ export const useCartStore = create<MedusaCartState>()(
       },
 
       removeItem: async (lineItemId: string) => {
-        const { cartId } = get();
+        const { cartId, items } = get();
         if (!cartId) return;
+
+        // Optimistic update
+        const previousItems = [...items];
+        const newItems = items.filter(item => item.id !== lineItemId);
+        set({ 
+          items: newItems,
+          itemCount: newItems.reduce((acc, next) => acc + next.quantity, 0)
+        });
 
         try {
           const { cart } = await medusa.carts.lineItems.delete(cartId, lineItemId);
+          const items = cart.items.map((item: any) => ({
+            ...item,
+            thumbnail: formatImageUrl(item.thumbnail),
+          }));
+
           set({ 
-            items: cart.items, 
+            items, 
             subtotal: cart.subtotal || 0,
-            itemCount: cart.items.reduce((acc, next) => acc + next.quantity, 0)
+            itemCount: items.reduce((acc, next) => acc + next.quantity, 0)
           });
         } catch (error) {
           console.error('Failed to remove item:', error);
+          // Rollback
+          set({ items: previousItems, itemCount: previousItems.reduce((acc, next) => acc + next.quantity, 0) });
         }
       },
 
       updateQuantity: async (lineItemId: string, quantity: number) => {
-        const { cartId } = get();
+        const { cartId, items } = get();
         if (!cartId) return;
+
+        // Optimistic update
+        const previousItems = [...items];
+        const newItems = items.map(item => 
+          item.id === lineItemId ? { ...item, quantity } : item
+        );
+        set({ 
+          items: newItems,
+          itemCount: newItems.reduce((acc, next) => acc + next.quantity, 0)
+        });
 
         try {
           const { cart } = await medusa.carts.lineItems.update(cartId, lineItemId, {
             quantity,
           });
+          const items = cart.items.map((item: any) => ({
+            ...item,
+            thumbnail: formatImageUrl(item.thumbnail),
+          }));
+
           set({ 
-            items: cart.items, 
+            items, 
             subtotal: cart.subtotal || 0,
-            itemCount: cart.items.reduce((acc, next) => acc + next.quantity, 0)
+            itemCount: items.reduce((acc, next) => acc + next.quantity, 0)
           });
         } catch (error) {
           console.error('Failed to update quantity:', error);
+          // Rollback
+          set({ items: previousItems, itemCount: previousItems.reduce((acc, next) => acc + next.quantity, 0) });
         }
       },
 
@@ -136,3 +196,4 @@ export const useCartStore = create<MedusaCartState>()(
     }
   )
 );
+
